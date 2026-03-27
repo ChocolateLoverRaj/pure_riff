@@ -20,10 +20,6 @@ pub struct RiffChunkHeader {
 #[derive(Debug)]
 pub struct ContainerInfoError;
 
-/// There would be negative len for sub chunks.
-#[derive(Debug)]
-pub struct SubChunksError;
-
 #[derive(Debug)]
 pub struct ContainerInfo {
     /// See the [`Id`] type for the len of the id.
@@ -35,6 +31,7 @@ pub struct ContainerInfo {
 }
 
 impl RiffChunkHeader {
+    /// Checks the chunk id to see if this is a container, and if it, returns container info.
     pub fn container_info(&self) -> Option<Result<ContainerInfo, ContainerInfoError>> {
         match &self.chunk_id {
             b"RIFF" | b"LIST" => Some({
@@ -71,50 +68,20 @@ pub struct ParsedRiffChunkInfo {
     pub position: u32,
 }
 
-/// For the required len, use [`RiffChunksParser::MIN_READ_BUFFER_LEN`].
-pub struct ReadInstructions {
-    /// The position (where `0` is the start of the first RIFF chunk) to start reading from.
-    pub position: u32,
-    /// The number of bytes that it would be useful to read, including bytes that are not immediately needed but may be used to parse future chunks.
-    /// This might speed up performance.
-    pub prefetch_len: u32,
-}
-
-/// The remaining data is too small to contain another chunk.
 #[derive(Debug)]
-pub struct ParseChunksError;
-
-pub struct ProcessDataOutput {
-    pub chunk_info: ParsedRiffChunkInfo,
-    pub continue_parsing: Result<Option<RiffChunksParser>, ParseChunksError>,
+pub struct ParseChunkOutput {
+    pub parsed_chunk: RiffChunkHeader,
+    pub next_chunk_relative_position: u32,
 }
 
-pub struct RiffChunksParser {
-    position: u32,
-}
+pub const BUFFER_LEN: usize = size_of::<RiffChunkHeader>();
 
-impl RiffChunksParser {
-    /// If you want to read from the beginning of the list of chunks, use position `0`.
-    pub fn new(position: u32) -> Self {
-        Self { position }
-    }
-
-    pub fn position(&self) -> u32 {
-        self.position
-    }
-
-    pub const MIN_READ_BUFFER_LEN: usize = size_of::<RiffChunkHeader>();
-
-    pub fn process_data(&mut self, data: [u8; Self::MIN_READ_BUFFER_LEN]) -> ParsedRiffChunkInfo {
-        let chunk_header: RiffChunkHeader = transmute!(data);
-        let data_len = chunk_header.chunk_len.get();
-        let header_len = u32::try_from(size_of::<RiffChunkHeader>()).unwrap();
-        let chunk_position = self.position;
-        // The specification says that there is a padding byte if the data len is odd
-        self.position += header_len + data_len.next_multiple_of(2);
-        ParsedRiffChunkInfo {
-            header: chunk_header,
-            position: chunk_position,
-        }
+pub fn parse_chunk(data: [u8; BUFFER_LEN]) -> ParseChunkOutput {
+    let chunk_header: RiffChunkHeader = transmute!(data);
+    let data_len = chunk_header.chunk_len.get();
+    let header_len = u32::try_from(size_of::<RiffChunkHeader>()).unwrap();
+    ParseChunkOutput {
+        parsed_chunk: chunk_header,
+        next_chunk_relative_position: header_len + data_len.next_multiple_of(2),
     }
 }
