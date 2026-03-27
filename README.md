@@ -1,6 +1,6 @@
-# `pure_wav`
-[![Crates.io Version](https://img.shields.io/crates/v/pure_wav)](https://crates.io/crates/pure_wav)
-[![docs.rs](https://img.shields.io/docsrs/pure_wav)](https://docs.rs/pure_wav/latest/pure_wav/)
+# `pure_riff`
+[![Crates.io Version](https://img.shields.io/crates/v/pure_riff)](https://crates.io/crates/pure_riff)
+[![docs.rs](https://img.shields.io/docsrs/pure_riff)](https://docs.rs/pure_riff/latest/pure_riff/)
 
 A Rust library to parse RIFF data.
 
