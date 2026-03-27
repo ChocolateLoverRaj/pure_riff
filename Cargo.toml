@@ -1,7 +1,12 @@
 [package]
 name = "pure_riff"
-version = "0.1.0"
+description = "A library to parse RIFF data"
+version = "1.0.0"
 edition = "2024"
+repository = "https://github.com/ChocolateLoverRaj/pure_riff"
+authors = ["Rajas Paranjpe"]
+license = "AGPL-3.0-or-later"
+categories = ["no-std", "embedded", "no-std::no-alloc", "parsing"]
 
 [dependencies]
 zerocopy = { version = "0.8.47", features = ["derive"] }

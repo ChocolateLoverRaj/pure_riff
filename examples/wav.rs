@@ -3,7 +3,9 @@ use std::{
     io::{Read, Seek, SeekFrom},
 };
 
-use pure_riff::{BUFFER_LEN, Id, ParseChunkOutput, parse_chunk};
+use pure_riff::{
+    BUFFER_LEN, CONTAINER_ID_OFFSET, Id, ParseChunkOutput, SUB_CHUNKS_OFFSET, parse_chunk,
+};
 
 fn main() {
     let mut file =
@@ -13,9 +15,7 @@ fn main() {
     let mut depth = 0;
     let mut container_end_stack = vec![file_len];
     let mut position = 0;
-    // let mut parser = RiffChunksParser::new(0);
     while let Some(current_container_end) = container_end_stack.last() {
-        // println!("position: {position}. stack: {container_end_stack:?}");
         if position == *current_container_end {
             if container_end_stack.pop().is_some() {
                 depth -= 1;
@@ -25,7 +25,6 @@ fn main() {
             }
         }
         let mut buffer = [Default::default(); BUFFER_LEN];
-        // Seek to position, but it's already at the position so no need to seek
         file.seek(SeekFrom::Start(position.into())).unwrap();
         file.read_exact(&mut buffer).unwrap();
         let ParseChunkOutput {
@@ -45,10 +44,8 @@ fn main() {
             let mut id_buffer = [Default::default(); size_of::<Id>()];
             depth += 1;
 
-            file.seek(SeekFrom::Start(
-                (position + container_info.id_position).into(),
-            ))
-            .unwrap();
+            file.seek(SeekFrom::Start((position + CONTAINER_ID_OFFSET).into()))
+                .unwrap();
             file.read_exact(&mut id_buffer).unwrap();
             let id = str::from_utf8(&id_buffer).unwrap();
             for _ in 0..depth {
@@ -56,12 +53,8 @@ fn main() {
             }
             println!("{id}");
 
-            // parser =
-            //     RiffChunksParser::new(chunk_info.position + container_info.sub_chunks.position);
-            container_end_stack.push(
-                position + container_info.sub_chunks.position + container_info.sub_chunks.len,
-            );
-            position += container_info.sub_chunks.position;
+            container_end_stack.push(position + SUB_CHUNKS_OFFSET + container_info.sub_chunks_len);
+            position += SUB_CHUNKS_OFFSET;
         } else {
             position += next_chunk_relative_position;
         }
