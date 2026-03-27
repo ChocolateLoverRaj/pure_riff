@@ -7,6 +7,8 @@ repository = "https://github.com/ChocolateLoverRaj/pure_riff"
 authors = ["Rajas Paranjpe"]
 license = "AGPL-3.0-or-later"
 categories = ["no-std", "embedded", "no-std::no-alloc", "parsing"]
+keywords = ["riff", "wav"]
+include = ["**/*.rs"]
 
 [dependencies]
 zerocopy = { version = "0.8.47", features = ["derive"] }
